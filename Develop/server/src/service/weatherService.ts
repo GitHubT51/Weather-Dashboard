@@ -37,26 +37,69 @@ class WeatherService {
   }
 
   // TODO: Create fetchLocationData method
+  // private async fetchLocationData(query: string) {}
   async fetchLocationData (query: string) {
     const response = await fetch(`${this.baseURL}/geo/1.0/direct?q=${query}&limit=5&appid=${this.apiKey}`);
     const locationData = await response.json();
     return locationData;
   }
-  // private async fetchLocationData(query: string) {}
   // TODO: Create destructureLocationData method
   // private destructureLocationData(locationData: tureLocationData method}
- //TODO: Create buildGeocodeQuery method
-  // private buildGeocodeQuery(): string { TODO: Create buildGeocodeQuery method
-  //  // TODO: Create fetchAndDestructureLocationData method
+  async destructureLocationData(locationData: any) {
+    const { lat, lon } = locationData[0];
+    return { lat, lon };
+  }
+  
+  //TODO: Create buildGeocodeQuery method
+  // private buildGeocodeQuery(): string { 
+  async buildGeocodeQuery() {
+    return `lat=${this.cityName.lat}&lon=${this.cityName.lon}`;
+  }
+
+
+  // TODO: Create fetchAndDestructureLocationData method
   // private async fetchAndDestructureLocationData() {}
+  async fetchAndDestructureLocationData() {
+    const locationData = await this.fetchLocationData(this.cityName);
+    return this.destructureLocationData(locationData);
+  }
+
+
   // TODO: Create fetchWeatherData method
   // private async fetchWeatherData(coordinates: Coordinates) {}
+  async fetchWeatherData(coordinates: Coordinates) {
+    const response = await fetch(`${this.baseURL}/data/2.5/onecall?${this.buildGeocodeQuery()}&exclude=minutely,hourly&appid=${this.apiKey}`);
+    const weatherData = await response.json();
+    return weatherData;
+  }
   // TODO: Build parseCurrentWeather method
   // private parseCurrentWeather(response: any) {}
+  async parseCurrentWeather(response: any) {
+    const { current } = response;
+    const { temp, humidity, wind_speed } = current;
+    return new Weather(this.cityName, new Date().toLocaleDateString(), temp, humidity, wind_speed);
+  }
   // TODO: Complete buildForecastArray method
   // private buildForecastArray(currentWeather: Weather, weatherData: any[]) {}
+  async buildForecastArray(currentWeather: Weather, weatherData: any[]) {
+    const forecastArray = [];
+    for (let i = 1; i < 6; i++) {
+      const { temp, humidity, wind_speed } = weatherData[i];
+      forecastArray.push(new Weather(this.cityName, new Date().toLocaleDateString(), temp, humidity, wind_speed));
+    }
+    return forecastArray;
+  }
   // TODO: Complete getWeatherForCity method
   // async getWeatherForCity(city: string) {}
+
+  async getWeatherForCity(city: string) {
+    this.cityName = city;
+    const coordinates = await this.fetchAndDestructureLocationData();
+    const weatherData = await this.fetchWeatherData(coordinates);
+    const currentWeather = await this.parseCurrentWeather(weatherData);
+    const forecastArray = await this.buildForecastArray(currentWeather, weatherData.daily);
+    return { currentWeather, forecastArray };
+  }
 }
 
 export default new WeatherService();
