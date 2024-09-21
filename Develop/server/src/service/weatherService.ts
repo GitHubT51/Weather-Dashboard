@@ -38,7 +38,7 @@ class WeatherService {
 
   // TODO: Create fetchLocationData method
   // private async fetchLocationData(query: string) {}
-  private fetchLocationData (query: string) {
+  private async fetchLocationData (query: string) {
     const response = await fetch(`${this.baseURL}/geo/1.0/direct?q=${query}&limit=5&appid=${this.apiKey}`);
     const locationData = await response.json();
     return locationData;
@@ -52,8 +52,9 @@ class WeatherService {
   
   //TODO: Create buildGeocodeQuery method
   // private buildGeocodeQuery(): string { 
-  private buildGeocodeQuery() {
-    return `lat=${this.cityName.lat}&lon=${this.cityName.lon}`;
+  private buildGeocodeQuery(coordinates:Coordinates) :string{
+    // return `lat=${this.lat}&lon=${this.lon}`;
+    return `https://api.openweathermap.org/data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}`
   }
 
 
@@ -68,7 +69,7 @@ class WeatherService {
   // TODO: Create fetchWeatherData method
   // private async fetchWeatherData(coordinates: Coordinates) {}
   private async fetchWeatherData(coordinates: Coordinates) {
-    const response = await fetch(`${this.baseURL}/data/2.5/onecall?${this.buildGeocodeQuery()}&exclude=minutely,hourly&appid=${this.apiKey}`);
+    const response = await fetch(`${this.baseURL}/data/2.5/onecall?${this.buildGeocodeQuery(coordinates)}&exclude=minutely,hourly&appid=${this.apiKey}`);
     const weatherData = await response.json();
     return weatherData;
   }
@@ -82,7 +83,7 @@ class WeatherService {
   // TODO: Complete buildForecastArray method
   // private buildForecastArray(currentWeather: Weather, weatherData: any[]) {}
   private buildForecastArray(currentWeather: Weather, weatherData: any[]) {
-    const forecastArray = [];
+    const forecastArray : Weather[] = [currentWeather]
     for (let i = 1; i < 6; i++) {
       const { temp, humidity, wind_speed } = weatherData[i];
       forecastArray.push(new Weather(this.cityName, new Date().toLocaleDateString(), temp, humidity, wind_speed));
